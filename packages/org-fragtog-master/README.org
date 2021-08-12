@@ -1,0 +1,24 @@
+[[https://melpa.org/#/org-fragtog][file:https://melpa.org/packages/org-fragtog-badge.svg]]
+[[https://github.com/io12/org-fragtog/actions/workflows/check.yml][file:https://github.com/io12/org-fragtog/actions/workflows/check.yml/badge.svg]]
+
+* ~org-fragtog~
+Automatically toggle Org mode LaTeX fragment previews as the cursor enters and exits them
+** About
+[[https://orgmode.org/][Org mode]]
+supports
+[[https://orgmode.org/manual/Previewing-LaTeX-fragments.html#Previewing-LaTeX-fragments][inline image previews]]
+of
+[[https://orgmode.org/manual/LaTeX-fragments.html][LaTeX fragments]].
+These can be toggled with @@html:<kbd>@@ C-c C-x C-l @@html:</kbd>@@. ~org-fragtog~ automates this, so fragment previews are disabled for editing when your cursor steps onto them, and re-enabled when the cursor leaves.
+
+[[./demo.gif]]
+** Setup
+Install and load the package, then add the snippet below to your config.
+
+#+begin_src emacs-lisp
+(add-hook 'org-mode-hook 'org-fragtog-mode)
+#+end_src
+
+Although this package uses Org mode's fragment preview feature,
+it should work with anything that uses the same fragment syntax,
+such as Markdown files or formulas in code comments.
