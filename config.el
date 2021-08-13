@@ -178,7 +178,15 @@
       bibtex-completion-library-path "~/Documents/bibliography/pdfs"
       bibtex-completion-notes-path "~/Documents/bibliography/notes.org")
 
-(setq bibtex-completion-pdf-open-function 'pdf-view)
+;(setq bibtex-completion-pdf-open-function 'pdf-tools)
+(defun my/org-ref-open-pdf-at-point ()
+  "Open the pdf for bibtex key under point if it exists."
+  (interactive)
+  (let* ((results (org-ref-get-bibtex-key-and-file))
+         (key (car results)))
+    (funcall bibtex-completion-pdf-open-function (car (bibtex-completion-find-pdf key)))))
+
+(setq org-ref-open-pdf-function #'my/org-ref-open-pdf-at-point)
 
 ;; Allow for pulling pdfs from sci-hub
 ;; Thanks to user Ajned on the emacs stack exchange
