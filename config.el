@@ -125,7 +125,8 @@
        :desc "pdf" "f"  #'(lambda () (interactive) (my/ivy-switch-buffer "pdf"))
        :desc "py"  "p"  #'(lambda () (interactive) (my/ivy-switch-buffer "py"))
        :desc "org" "o"  #'(lambda () (interactive) (my/ivy-switch-buffer "org"))
-       :desc "el"  "e"  #'(lambda () (interactive) (my/ivy-switch-buffer "el")))))
+       :desc "el"  "e"  #'(lambda () (interactive) (my/ivy-switch-buffer "el"))
+       :desc "bib" "b" #'(lambda () (interactive)  (my/ivy-switch-buffer "bib")))))
 
 (defun my/ivy-switch-buffer (extension)
   ;; Show available buffers for a given extension
@@ -170,7 +171,7 @@
 (require 'org-ref)
 (setq reftex-default-bibliography '("~/Documents/bibliography/references.bib"))
 
-(setq org-ref-bibliography-notes "~/Documents/bibiliography/notes.org"
+(setq org-ref-bibliography-notes "~/Documents/bibliography/notes.org"
       org-ref-default-bibliography '("~/Documents/bibliography/references.bib")
       org-ref-pdf-directory "~/Documents/bibliography/pdfs")
 
