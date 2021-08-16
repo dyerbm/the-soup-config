@@ -126,7 +126,7 @@
        :desc "py"  "p"  #'(lambda () (interactive) (my/ivy-switch-buffer "py"))
        :desc "org" "o"  #'(lambda () (interactive) (my/ivy-switch-buffer "org"))
        :desc "el"  "e"  #'(lambda () (interactive) (my/ivy-switch-buffer "el"))
-       :desc "bib" "b" #'(lambda () (interactive)  (my/ivy-switch-buffer "bib")))))
+       :desc "bib" "b"  #'(lambda () (interactive)  (my/ivy-switch-buffer "bib")))))
 
 (defun my/ivy-switch-buffer (extension)
   ;; Show available buffers for a given extension
@@ -275,6 +275,8 @@ checked."
         (message "We don't have a recipe for this journal.")))
       (when (and doi-utils-open-pdf-after-download (file-exists-p pdf-file))
         (org-open-file pdf-file))))))
+
+(setq doi-utils-open-pdf-after-download t)
 
 
 ;; latex processing
