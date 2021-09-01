@@ -157,6 +157,7 @@
 
 ;;orgmode latex stuff
 (setq org-preview-latex-default-process 'dvipng)
+(setq org-latex-packages-alist '(("" "physics" t)))
 ;auto compile latex fragments
 (use-package! org-fragtog)
 (add-hook 'org-mode-hook 'org-fragtog-mode)
@@ -274,10 +275,13 @@ checked."
        (t
         (message "We don't have a recipe for this journal.")))
       (when (and doi-utils-open-pdf-after-download (file-exists-p pdf-file))
+        (message "Here")
         (org-open-file pdf-file))))))
 
-(setq doi-utils-open-pdf-after-download t)
-
+(setq doi-utils-open-pdf-after-download t) ;always open the pdf after downloading
+(setq doi-utils-make-notes t) ;auto generate notes
 
 ;; latex processing
 (setq org-latex-pdf-process (list "latexmk -shell-excape -bibtex -f -pdf %f")) ;check what this does
+
+(bibtex-set-dialect 'BibTeX)
