@@ -153,7 +153,7 @@
 (require 'org)
 (define-key global-map "\C-cl" 'org-store-link)
 (setq org-log-done t)
-(setq org-agenda-files (list "~/Documents/Mac-PhD/Org/Tutorial.org"))
+(setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
 
 ;;orgmode latex stuff
 (setq org-preview-latex-default-process 'dvipng)
