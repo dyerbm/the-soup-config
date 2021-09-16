@@ -165,6 +165,7 @@
 ;; start-up format and phscroll
 (use-package! phscroll)
 (setq org-startup-indented t)
+(setq org-startup-folded t)
 (setq org-startup-truncated nil)
 (use-package! org-phscroll)
 
