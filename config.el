@@ -93,6 +93,9 @@
 
           "o" #'pdf-outline))
 
+(add-hook! 'pdf-view-mode-hook
+           (pdf-view-midnight-minor-mode))
+
 (setq doom-localleader-key ";")
 
 (use-package! ace-window
