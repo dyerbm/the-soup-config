@@ -286,6 +286,10 @@ checked."
 (setq doi-utils-make-notes t) ;auto generate notes
 
 ;; latex processing
-(setq org-latex-pdf-process (list "latexmk -shell-excape -bibtex -f -pdf %f")) ;check what this does
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"
+        "bibtex %b"
+        "pdflatex -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -interaction nonstopmode -output-directory %o %f")) ;check what this does
 
 (bibtex-set-dialect 'BibTeX)
