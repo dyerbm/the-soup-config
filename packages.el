@@ -53,3 +53,7 @@
 
 (package! org-super-agenda)
 (package! pdf-tools)
+(package! org-ref)
+(package! vterm)
+(package! ace-window)
+(package! ivy)
