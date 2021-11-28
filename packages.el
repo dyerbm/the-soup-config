@@ -57,3 +57,4 @@
 (package! vterm)
 (package! ace-window)
 (package! ivy)
+(package! cdlatex)
