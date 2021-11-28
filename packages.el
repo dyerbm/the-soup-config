@@ -58,3 +58,5 @@
 (package! ace-window)
 (package! ivy)
 (package! cdlatex)
+(package! tree-sitter)
+(package! tree-sitter-langs)

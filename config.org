@@ -1,9 +1,16 @@
+* Language Parsers
+** Tree Sitter
+#+begin_src emacs-lisp
 (use-package! tree-sitter
   :config
   (require 'tree-sitter-langs)
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+#+end_src
 
+** Old config
+
+#+BEGIN_SRC emacs-lisp
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 ;; Place your private configuration here! Remember, you do not need to run 'doom
@@ -303,3 +310,4 @@ checked."
 (bibtex-set-dialect 'BibTeX)
 
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
+#+END_SRC
