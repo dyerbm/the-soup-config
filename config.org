@@ -1,14 +1,4 @@
-* Language Parsers
-** Tree Sitter
-#+begin_src emacs-lisp
-(use-package! tree-sitter
-  :config
-  (require 'tree-sitter-langs)
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-#+end_src
-
-** Old config
+* Preamble
 
 #+BEGIN_SRC emacs-lisp
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
@@ -75,6 +65,49 @@
 (add-to-list 'exec-path "/usr/local/texlive/2021/bin/x86_64-linux")
 (add-to-list 'exec-path "/usr/local/texlive/2021/texmf-dist/tex/")
 
+(setq doom-localleader-key ";")
+#+END_SRC
+
+
+* Language Parsers
+** Tree Sitter
+#+begin_src emacs-lisp
+(use-package! tree-sitter
+  :config
+  (require 'tree-sitter-langs)
+  (global-tree-sitter-mode)
+  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+#+end_src
+
+* Org
+
+#+BEGIN_SRC emacs-lisp
+(require 'org)
+#+END_SRC
+
+** Latex in Org
+
+#+BEGIN_SRC emacs-lisp
+(setq org-preview-latex-default-process 'dvipng)
+(setq org-latex-packages-alist '(("" "physics" t)))
+
+;; auto compile latex fragments
+(use-package! org-fragtog)
+(add-hook 'org-mode-hook 'org-fragtog-mode)
+
+;; latex processing
+(setq org-latex-pdf-process
+      '("pdflatex -interaction nonstopmode -output-directory %o %f"
+        "bibtex %b"
+        "pdflatex -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -interaction nonstopmode -output-directory %o %f")) ;check what this does
+
+(bibtex-set-dialect 'BibTeX)
+(add-hook 'org-mode-hook #'turn-on-org-cdlatex)
+#+END_SRC
+
+** Org-agenda
+#+BEGIN_SRC emacs-lisp
 (use-package! org-super-agenda
   :after org-agenda
   :init
@@ -94,100 +127,18 @@
   :config
   (org-super-agenda-mode)
   )
-
-(use-package! pdf-tools
-  :config
-  (evil-define-key 'normal pdf-view-mode-map (kbd ":") 'pdf-view-goto-page)
-  (map! :localleader
-        :map pdf-view-mode-map
-          "f" #'pdf-occur
-          ;; History
-          "c" #'pdf-history-clear
-          "j" #'pdf-history-backward
-          "k" #'pdf-history-forward
-
-          "o" #'pdf-outline))
-
-(add-hook! 'pdf-view-mode-hook
-           (pdf-view-midnight-minor-mode))
-
-(setq doom-localleader-key ";")
-
-(use-package! ace-window
-  :config
-  (map! :leader
-        "k" nil
-        :desc "ace-window" "k" #'ace-window)
-  (setq aw-scope 'global
-        aw-ignore-on nil ; allow ace to jump to any buffer
-        ))
-
-(map! :leader
-      (:desc "next buffer" "D" #'switch-to-next-buffer
-        :desc "prev buffer" "d" #'switch-to-prev-buffer
-        )
-      (:prefix "s"
-        :desc "swiper-isearch-thing-at-point" "t" #'swiper-isearch-thing-at-point)
-        ;; :desc "helm-projectile-rg" "p" #'helm-projectile-rg)
-      (:desc "repeat last command" "." #'repeat))
-
-(use-package! ivy
- :config
- (map! :leader
-     "A" #'ivy-switch-buffer
-      "a" nil
-      (:prefix ("a" . "switch-to-buffer")
-       :desc "c"   "c"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(cpp\|c\)"))
-       :desc "h"   "h"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(hpp\|h\)"))
-       :desc "m"   "m"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(mat\|m\)"))
-       :desc "pdf" "f"  #'(lambda () (interactive) (my/ivy-switch-buffer "pdf"))
-       :desc "py"  "p"  #'(lambda () (interactive) (my/ivy-switch-buffer "py"))
-       :desc "org" "o"  #'(lambda () (interactive) (my/ivy-switch-buffer "org"))
-       :desc "el"  "e"  #'(lambda () (interactive) (my/ivy-switch-buffer "el"))
-       :desc "bib" "b"  #'(lambda () (interactive)  (my/ivy-switch-buffer "bib")))))
-
-(defun my/ivy-switch-buffer (extension)
-  ;; Show available buffers for a given extension
-  (interactive)
-  (let ((completion-regexp-list (list (concat ".\." extension "$"))))
-  (ivy-read "Switch to buffer: " #'internal-complete-buffer
-            :keymap ivy-switch-buffer-map
-            :preselect (buffer-name (other-buffer (current-buffer)))
-            :action #'ivy--switch-buffer-action
-            :matcher #'ivy--switch-buffer-matcher
-            :caller 'ivy-switch-buffer)))
-
-(defun my/switch-to-next-buffer-with-same-extension ()
-  (interactive)
-(save-match-data ; is usually a good idea
-  (string-match "\..$" (buffer-name))))
-
-;; (save-match-data ; is usually a good idea
-;;       (and (string-match "\(\..$\)." "eric.dyer@l3harris.com")
-;;            (setq user (match-string 1 "eric.dyer@l3harris.com")
-;;                  domain (match-string 1 "eric.dyer@l3harris.com") ) ))
-
-;; orgmode stuff
-(require 'org)
-(define-key global-map "\C-cl" 'org-store-link)
-(setq org-log-done t)
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
 
-;;orgmode latex stuff
-(setq org-preview-latex-default-process 'dvipng)
-(setq org-latex-packages-alist '(("" "physics" t)))
-;auto compile latex fragments
-(use-package! org-fragtog)
-(add-hook 'org-mode-hook 'org-fragtog-mode)
 
-;; start-up format and phscroll
-(use-package! phscroll)
-(setq org-startup-indented t)
-(setq org-startup-folded t)
-(setq org-startup-truncated nil)
-(use-package! org-phscroll)
+#+END_SRC
 
-;; org ref set-up
+** Org-ref
+
+#+BEGIN_SRC emacs-lisp
+
+(define-key global-map "\C-cl" 'org-store-link)
+(setq org-log-done t)
+
 (require 'org-ref)
 (setq reftex-default-bibliography '("~/Documents/bibliography/references.bib"))
 
@@ -215,7 +166,7 @@
 (defun sci-hub-pdf-url (doi)
   "Get url to the pdf from SCI-HUB"
   (setq *doi-utils-pdf-url* (concat "https://sci-hub.se/" doi) ;captcha
-        *doi-utils-waiting* t
+        ,*doi-utils-waiting* t
         )
   ;; try to find PDF url (if it exists)
   (url-retrieve (concat "https://sci-hub.se/" doi)
@@ -229,7 +180,7 @@
                 (setq *doi-utils-pdf-url* (concat "https:" foundurl))))
                 (setq *doi-utils-waiting* nil))))
   (while *doi-utils-waiting* (sleep-for 0.1))
-  *doi-utils-pdf-url*)
+  ,*doi-utils-pdf-url*)
 
 ;; Update doi function to use the sci-hub-pdf-url function
 (defun doi-utils-get-bibtex-entry-pdf (&optional arg)
@@ -300,14 +251,81 @@ checked."
 (setq doi-utils-open-pdf-after-download t) ;always open the pdf after downloading
 (setq doi-utils-make-notes t) ;auto generate notes
 
-;; latex processing
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"
-        "bibtex %b"
-        "pdflatex -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -interaction nonstopmode -output-directory %o %f")) ;check what this does
 
-(bibtex-set-dialect 'BibTeX)
+#+END_SRC
 
-(add-hook 'org-mode-hook #'turn-on-org-cdlatex)
+
+
+* PDF-Tools
+
+#+BEGIN_SRC emacs-lisp
+(use-package! pdf-tools
+  :config
+  (evil-define-key 'normal pdf-view-mode-map (kbd ":") 'pdf-view-goto-page)
+  (map! :localleader
+        :map pdf-view-mode-map
+          "f" #'pdf-occur
+          ;; History
+          "c" #'pdf-history-clear
+          "j" #'pdf-history-backward
+          "k" #'pdf-history-forward
+
+          "o" #'pdf-outline))
+
+(add-hook! 'pdf-view-mode-hook
+           (pdf-view-midnight-minor-mode))
+
+#+END_SRC
+
+* Buffer Switching
+#+BEGIN_SRC emacs-lisp
+(use-package! ace-window
+  :config
+  (map! :leader
+        "k" nil
+        :desc "ace-window" "k" #'ace-window)
+  (setq aw-scope 'global
+        aw-ignore-on nil ; allow ace to jump to any buffer
+        ))
+
+(map! :leader
+      (:desc "next buffer" "D" #'switch-to-next-buffer
+        :desc "prev buffer" "d" #'switch-to-prev-buffer
+        )
+      (:prefix "s"
+        :desc "swiper-isearch-thing-at-point" "t" #'swiper-isearch-thing-at-point)
+        ;; :desc "helm-projectile-rg" "p" #'helm-projectile-rg)
+      (:desc "repeat last command" "." #'repeat))
+
+(use-package! ivy
+ :config
+ (map! :leader
+     "A" #'ivy-switch-buffer
+      "a" nil
+      (:prefix ("a" . "switch-to-buffer")
+       :desc "c"   "c"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(cpp\|c\)"))
+       :desc "h"   "h"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(hpp\|h\)"))
+       :desc "m"   "m"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(mat\|m\)"))
+       :desc "pdf" "f"  #'(lambda () (interactive) (my/ivy-switch-buffer "pdf"))
+       :desc "py"  "p"  #'(lambda () (interactive) (my/ivy-switch-buffer "py"))
+       :desc "org" "o"  #'(lambda () (interactive) (my/ivy-switch-buffer "org"))
+       :desc "el"  "e"  #'(lambda () (interactive) (my/ivy-switch-buffer "el"))
+       :desc "bib" "b"  #'(lambda () (interactive)  (my/ivy-switch-buffer "bib")))))
+
+(defun my/ivy-switch-buffer (extension)
+  ;; Show available buffers for a given extension
+  (interactive)
+  (let ((completion-regexp-list (list (concat ".\." extension "$"))))
+  (ivy-read "Switch to buffer: " #'internal-complete-buffer
+            :keymap ivy-switch-buffer-map
+            :preselect (buffer-name (other-buffer (current-buffer)))
+            :action #'ivy--switch-buffer-action
+            :matcher #'ivy--switch-buffer-matcher
+            :caller 'ivy-switch-buffer)))
+
+(defun my/switch-to-next-buffer-with-same-extension ()
+  (interactive)
+(save-match-data ; is usually a good idea
+  (string-match "\..$" (buffer-name))))
+
 #+END_SRC
