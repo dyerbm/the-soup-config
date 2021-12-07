@@ -88,6 +88,7 @@
 
 (bibtex-set-dialect 'BibTeX)
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
+(setq company-global-modes '(not org-mode)) ;disable company mode in org
 
 (use-package! org-super-agenda
   :after org-agenda
