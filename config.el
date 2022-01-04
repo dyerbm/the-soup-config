@@ -72,6 +72,8 @@
 
 (require 'org)
 
+(setq org-startup-folded t)
+
 (setq org-preview-latex-default-process 'dvipng)
 (setq org-latex-packages-alist '(("" "physics" t)))
 

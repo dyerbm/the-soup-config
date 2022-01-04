@@ -83,7 +83,11 @@
 
 #+BEGIN_SRC emacs-lisp
 (require 'org)
+
+(setq org-startup-folded t)
 #+END_SRC
+
+
 
 ** Latex in Org
 
