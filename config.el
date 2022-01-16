@@ -76,6 +76,7 @@
 
 (setq org-preview-latex-default-process 'dvipng)
 (setq org-latex-packages-alist '(("" "physics" t)))
+(setq org-latex-packages-alist '(("" "siunitx" t)))
 
 ;; auto compile latex fragments
 (use-package! org-fragtog)
