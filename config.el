@@ -306,3 +306,25 @@ checked."
     (progn
       (window-configuration-to-register '_)
       (delete-other-windows))))
+
+(use-package! magit
+  :config
+  (map! :leader
+        (:prefix "g"
+         :desc "status" "G" #'my/magit-status
+         :desc "buffer-lock" "T" #'magit-toggle-buffer-lock)))
+
+(defun my/magit-status ()
+  "Use ivy to specify directory from which to open a magit status buffer.
+Default starting place is the home directory."
+  (interactive)
+  (let ((default-directory "~/"))
+    (ivy-read "git status: " #'read-file-name-internal
+              :matcher #'counsel--find-file-matcher
+              :action #'(lambda (x)
+                          (magit-status x))
+              :preselect (counsel--preselect-file)
+              :require-match 'confirm-after-completion
+              :history 'file-name-history
+              :keymap counsel-find-file-map
+              :caller 'my/magit-status)))
