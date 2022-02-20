@@ -293,3 +293,16 @@ checked."
   (interactive)
 (save-match-data ; is usually a good idea
   (string-match "\..$" (buffer-name))))
+
+(map! :leader
+      (:prefix "w"
+       :desc "maximize window" "f" #'my/toggle-maximize-buffer
+       :desc "make new frame"  "n" #'make-frame))
+
+(defun my/toggle-maximize-buffer () "Maximize buffer"
+  (interactive)
+  (if (= 1 (length (window-list)))
+      (jump-to-register '_)
+    (progn
+      (window-configuration-to-register '_)
+      (delete-other-windows))))
