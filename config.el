@@ -328,3 +328,11 @@ Default starting place is the home directory."
               :history 'file-name-history
               :keymap counsel-find-file-map
               :caller 'my/magit-status)))
+
+(map! :leader
+      "x" nil
+      (:prefix ("x" . "dired")
+       :desc "dired here" "d" #'(lambda () (interactive) (dired default-directory))
+       :desc "dired" "D" #'dired))
+
+(setq delete-by-moving-to-trash t) ; Move to trash bin instead of permanently deleting it

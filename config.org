@@ -337,7 +337,7 @@ checked."
 #+END_SRC
 
 
-* maximze window
+* Maximize window
 
 #+BEGIN_SRC emacs-lisp
 (map! :leader
@@ -355,6 +355,7 @@ checked."
 #+END_SRC
 
 * MAGIT
+
 #+BEGIN_SRC emacs-lisp
 (use-package! magit
   :config
@@ -380,4 +381,17 @@ Default starting place is the home directory."
 
 #+END_SRC
 
+* DIRED
+
+#+Begin_Src emacs-lisp
+(map! :leader
+      "x" nil
+      (:prefix ("x" . "dired")
+       :desc "dired here" "d" #'(lambda () (interactive) (dired default-directory))
+       :desc "dired" "D" #'dired))
+
+(setq delete-by-moving-to-trash t) ; Move to trash bin instead of permanently deleting it
+#+End_Src
+
+* Todo's
  - [ ] Look for SPC f j
