@@ -336,3 +336,11 @@ Default starting place is the home directory."
        :desc "dired" "D" #'dired))
 
 (setq delete-by-moving-to-trash t) ; Move to trash bin instead of permanently deleting it
+
+(with-eval-after-load 'ox
+  (require 'ox-hugo))
+
+(use-package ox-hugo
+  :ensure t ;Auto-install the package from Melpa
+  :pin melpa ;packages-achrives
+  :after ox)
