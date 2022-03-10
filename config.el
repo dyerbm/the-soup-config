@@ -340,7 +340,7 @@ Default starting place is the home directory."
 (with-eval-after-load 'ox
   (require 'ox-hugo))
 
-(use-package ox-hugo
+(use-package! ox-hugo
   :ensure t ;Auto-install the package from Melpa
   :pin melpa ;packages-achrives
   :after ox)
