@@ -60,3 +60,4 @@
 (package! cdlatex)
 (package! tree-sitter)
 (package! tree-sitter-langs)
+(package! org-download)

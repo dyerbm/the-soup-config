@@ -68,7 +68,6 @@
 (setq doom-localleader-key ";")
 #+END_SRC
 
-
 * Language Parsers
 ** Tree Sitter
 #+begin_src emacs-lisp
@@ -107,7 +106,7 @@
         "pdflatex -interaction nonstopmode -output-directory %o %f"
         "pdflatex -interaction nonstopmode -output-directory %o %f")) ;check what this does
 
-(bibtex-set-dialect 'BibTeX)
+(setq bibtex-dialect 'BibTeX)
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
 (setq company-global-modes '(not org-mode)) ;disable company mode in org
 #+END_SRC
@@ -260,7 +259,15 @@ checked."
 
 #+END_SRC
 
+** Image insertion
+We use this for =M-x org-download-clipboard= which allows to directly insert an image stored in the clipboard into the current org doc.
 
+Make sure that you have =xclip= installed. I also use =gnome-screenshot= for easy screenshot capture. Take a screenshot (saved into clipboard) and then execute the =M-x org-download-clipboard= command while in an org buffer to insert clipboard image at point. Default config saves the image in the same directory as the org buffer.
+
+#+begin_src emacs-lisp
+(require 'org-download)
+(add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
+#+end_src
 
 * PDF-Tools
 
@@ -336,7 +343,6 @@ checked."
 
 #+END_SRC
 
-
 * Maximize window
 
 #+BEGIN_SRC emacs-lisp
@@ -395,7 +401,7 @@ Default starting place is the home directory."
 
 * Todo's
  - [ ] Look for SPC f j
-
+- [ ] Make doi search go to sci-hub first (or delete file and find a new one for invalid <=DOC HEAD)
 * Ox-hugo
 
 #+BEGIN_SRC emacs-lisp

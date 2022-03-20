@@ -89,7 +89,7 @@
         "pdflatex -interaction nonstopmode -output-directory %o %f"
         "pdflatex -interaction nonstopmode -output-directory %o %f")) ;check what this does
 
-(bibtex-set-dialect 'BibTeX)
+(setq bibtex-dialect 'BibTeX)
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
 (setq company-global-modes '(not org-mode)) ;disable company mode in org
 
@@ -228,6 +228,9 @@ checked."
 
 (setq doi-utils-open-pdf-after-download t) ;always open the pdf after downloading
 (setq doi-utils-make-notes t) ;auto generate notes
+
+(require 'org-download)
+(add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
 
 (use-package! pdf-tools
   :config
