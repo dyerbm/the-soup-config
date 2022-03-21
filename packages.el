@@ -61,3 +61,4 @@
 (package! tree-sitter)
 (package! tree-sitter-langs)
 (package! org-download)
+(package! ivy-bibtex)

@@ -126,108 +126,44 @@
 
 (setq bibtex-completion-bibliography "~/Documents/bibliography/references.bib"
       bibtex-completion-library-path "~/Documents/bibliography/pdfs"
-      bibtex-completion-notes-path "~/Documents/bibliography/notes.org")
+      bibtex-completion-notes-path "~/Documents/bibliography/notes.org"
+      bibtex-completion-notes-template-multiple-files "* ${author-or-editor}, ${title}, ${journal}, (${year}) :${=type=}: \n\nSee [[cite:&${=key=}]]\n"
 
-;(setq bibtex-completion-pdf-open-function 'pdf-tools)
-(defun my/org-ref-open-pdf-at-point ()
-  "Open the pdf for bibtex key under point if it exists."
-  (interactive)
-  (let* ((results (org-ref-get-bibtex-key-and-file))
-         (key (car results)))
-    (funcall bibtex-completion-pdf-open-function (car (bibtex-completion-find-pdf key)))))
+	bibtex-completion-additional-search-fields '(keywords)
+	bibtex-completion-display-formats
+	'((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
+	  (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
+	  (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
+	  (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
+	  (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
+	bibtex-completion-pdf-open-function
+	(lambda (fpath)
+	  (call-process "open" nil 0 nil fpath)))
 
-(setq org-ref-open-pdf-function #'my/org-ref-open-pdf-at-point)
 
-;; Allow for pulling pdfs from sci-hub
-;; Thanks to user Ajned on the emacs stack exchange
-;; Sci-hub function
-(defun sci-hub-pdf-url (doi)
-  "Get url to the pdf from SCI-HUB"
-  (setq *doi-utils-pdf-url* (concat "https://sci-hub.se/" doi) ;captcha
-        *doi-utils-waiting* t
-        )
-  ;; try to find PDF url (if it exists)
-  (url-retrieve (concat "https://sci-hub.se/" doi)
-            (lambda (status)
-              (goto-char (point-min))
-              (while (search-forward-regexp "\\(https://\\|//sci-hub.se/downloads\\).+download=true'" nil t)
-                (let ((foundurl (match-string 0)))
-                  (message foundurl)
-                  (if (string-match "https:" foundurl)
-                  (setq *doi-utils-pdf-url* foundurl)
-                (setq *doi-utils-pdf-url* (concat "https:" foundurl))))
-                (setq *doi-utils-waiting* nil))))
-  (while *doi-utils-waiting* (sleep-for 0.1))
-  *doi-utils-pdf-url*)
+(require 'bibtex)
 
-;; Update doi function to use the sci-hub-pdf-url function
-(defun doi-utils-get-bibtex-entry-pdf (&optional arg)
-    "Download pdf for entry at point if the pdf does not already exist locally.
-The entry must have a doi. The pdf will be saved to
-`org-ref-pdf-directory', by the name %s.pdf where %s is the
-bibtex label.  Files will not be overwritten.  The pdf will be
-checked to make sure it is a pdf, and not some html failure
-page. You must have permission to access the pdf. We open the pdf
-at the end if `doi-utils-open-pdf-after-download' is non-nil.
+(setq bibtex-autokey-year-length 4
+	bibtex-autokey-name-year-separator "-"
+	bibtex-autokey-year-title-separator "-"
+	bibtex-autokey-titleword-separator "-"
+	bibtex-autokey-titlewords 2
+	bibtex-autokey-titlewords-stretch 1
+	bibtex-autokey-titleword-length 5
+	org-ref-bibtex-hydra-key-binding (kbd "H-b"))
 
-With one prefix ARG, directly get the pdf from a file (through
-`read-file-name') instead of looking up a DOI. With a double
-prefix ARG, directly get the pdf from an open buffer (through
-`read-buffer-to-switch') instead. These two alternative methods
-work even if the entry has no DOI, and the pdf file is not
-checked."
-    (interactive "P")
-    (save-excursion
-      (bibtex-beginning-of-entry)
-      (let ( ;; get doi, removing http://dx.doi.org/ if it is there.
-        (doi (replace-regexp-in-string
-          "https?://\\(dx.\\)?.doi.org/" ""
-          (bibtex-autokey-get-field "doi")))
-        (key (cdr (assoc "=key=" (bibtex-parse-entry))))
-        (pdf-url)
-        (pdf-file))
-    (setq pdf-file (concat
-            (if org-ref-pdf-directory
-                (file-name-as-directory org-ref-pdf-directory)
-              (read-directory-name "PDF directory: " "."))
-            key ".pdf"))
-    ;; now get file if needed.
-    (unless (file-exists-p pdf-file)
-      (cond
-       ((and (not arg)
-         doi
-         (if (doi-utils-get-pdf-url doi)
-             (setq pdf-url (doi-utils-get-pdf-url doi))
-           (setq pdf-url "https://www.sciencedirect.com/science/article/")))
-        (url-copy-file pdf-url pdf-file)
-        ;; now check if we got a pdf
-        (if (org-ref-pdf-p pdf-file)
-        (message "%s saved" pdf-file)
-          (delete-file pdf-file)
-          ;; sci-hub fallback option
-          (setq pdf-url (sci-hub-pdf-url doi))
-          (url-copy-file pdf-url pdf-file)
-          ;; now check if we got a pdf
-          (if (org-ref-pdf-p pdf-file)
-          (message "%s saved" pdf-file)
-        (delete-file pdf-file)
-        (message "No pdf was downloaded.") ; SH captcha
-        (browse-url pdf-url))))
-       ;; End of sci-hub fallback option
-       ((equal arg '(4))
-        (copy-file (expand-file-name (read-file-name "Pdf file: " nil nil t))
-               pdf-file))
-       ((equal arg '(16))
-        (with-current-buffer (read-buffer-to-switch "Pdf buffer: ")
-          (write-file pdf-file)))
-       (t
-        (message "We don't have a recipe for this journal.")))
-      (when (and doi-utils-open-pdf-after-download (file-exists-p pdf-file))
-        (message "Here")
-        (org-open-file pdf-file))))))
+(define-key bibtex-mode-map (kbd "H-b") 'org-ref-bibtex-hydra/body)
 
-(setq doi-utils-open-pdf-after-download t) ;always open the pdf after downloading
-(setq doi-utils-make-notes t) ;auto generate notes
+;; User org-ref-ivy
+(require 'org-ref-ivy)
+
+(setq org-ref-insert-link-function 'org-ref-insert-link-hydra/body
+      org-ref-insert-cite-function 'org-ref-cite-insert-ivy
+      org-ref-insert-label-function 'org-ref-insert-label-link
+      org-ref-insert-ref-function 'org-ref-insert-ref-link
+      org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body)))
+
+(define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link) ;; need to be able to use this after all
 
 (require 'org-download)
 (add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
