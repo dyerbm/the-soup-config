@@ -125,7 +125,7 @@
       org-ref-pdf-directory "~/Documents/bibliography/pdfs")
 
 (setq bibtex-completion-bibliography "~/Documents/bibliography/references.bib"
-      bibtex-completion-library-path "~/Documents/bibliography/pdfs"
+      bibtex-completion-library-path "~/Documents/bibliography/pdfs/"
       bibtex-completion-notes-path "~/Documents/bibliography/notes.org"
       bibtex-completion-notes-template-multiple-files "* ${author-or-editor}, ${title}, ${journal}, (${year}) :${=type=}: \n\nSee [[cite:&${=key=}]]\n"
 
