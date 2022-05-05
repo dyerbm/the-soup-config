@@ -144,7 +144,21 @@
 (define-key global-map "\C-cl" 'org-store-link)
 (setq org-log-done t)
 
-(require 'org-ref)
+(use-package org-ref
+  :ensure t
+  :init
+  (with-eval-after-load 'ox
+    (defun my/org-ref-process-buffer--html (backend)
+      "Preprocess `org-ref' citations to HTML format.
+
+Do this only if the export backend is `html' or a derivative of
+that."
+      ;; `ox-hugo' is derived indirectly from `ox-html'.
+      ;; ox-hugo <- ox-blackfriday <- ox-md <- ox-html
+      (when (org-export-derived-backend-p backend 'html)
+        (org-ref-process-buffer 'html)))
+    (add-to-list 'org-export-before-parsing-hook #'my/org-ref-process-buffer--html)))
+
 (setq reftex-default-bibliography '("~/Documents/bibliography/references.bib"))
 
 (setq org-ref-bibliography-notes "~/Documents/bibliography/notes.org"
@@ -195,15 +209,17 @@
 
 
 #+END_SRC
-
+10.1109/icma49215.2020.9233826
 Here is some stuff to modify how pdfs are downloaded and opened. Currently not included as it throws some errors
-
+10.1109/SysCon48628.2021.944713
+10.1109/ICRAS49812.2020.9134921
 #+Begin_SRC elisp :tangle no
-;(setq bibtex-completion-pdf-open-function 'pdf-tools)
-
+;(setq bibtex-completion-pdfopen-function 'pdf-tools)
+(setq doi-utils-async-download nil)
 
 
 (setq doi-utils-open-pdf-after-download 't)
+
 (defun my/org-ref-open-pdf-at-point ()
   "Open the pdf for bibtex key under point if it exists."
   (interactive)
@@ -232,8 +248,11 @@ Here is some stuff to modify how pdfs are downloaded and opened. Currently not i
                   (setq *doi-utils-pdf-url* foundurl)
                 (setq *doi-utils-pdf-url* (concat "https:" foundurl))))
                 (setq *doi-utils-waiting* nil))))
-  (while *doi-utils-waiting* (sleep-for 0.1))
+ ; (while *doi-utils-waiting* (sleep-for 0.1))
   ,*doi-utils-pdf-url*)
+
+;; add to the doi-utils-pdf-url-functions
+;;(add-to-list 'doi-utils-pdf-url-functions 'sci-hub-pdf-url)
 
 ;; Update doi function to use the sci-hub-pdf-url function
 (defun doi-utils-get-bibtex-entry-pdf (&optional arg)
