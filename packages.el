@@ -62,3 +62,4 @@
 (package! tree-sitter-langs)
 (package! org-download)
 (package! ivy-bibtex)
+(package! org-superstar)

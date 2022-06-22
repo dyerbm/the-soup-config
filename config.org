@@ -84,6 +84,8 @@
 (require 'org)
 
 (setq org-startup-folded t)
+(add-hook 'org-mode-hook 'org-hide-block-all) ;;Start blocks collapsed
+(define-key org-mode-map (kbd "C-c t") 'org-toggle-block)
 #+END_SRC
 
 
@@ -113,6 +115,10 @@
 
 ** Org-agenda
 #+BEGIN_SRC emacs-lisp
+(setq org-agenda-staart-with-log-mode t)
+(setq org-log-done 'time)
+(setq org-log-into-drawer t)
+
 (use-package! org-super-agenda
   :after org-agenda
   :init
@@ -132,9 +138,19 @@
   :config
   (org-super-agenda-mode)
   )
+
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
 
 
+#+END_SRC
+
+** Org-Bullets
+
+Gimme dem bullets
+
+#+BEGIN_SRC emacs-lisp
+(require 'org-superstar)
+(add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
 #+END_SRC
 
 ** Org-ref

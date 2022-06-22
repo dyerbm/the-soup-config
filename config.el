@@ -73,6 +73,8 @@
 (require 'org)
 
 (setq org-startup-folded t)
+(add-hook 'org-mode-hook 'org-hide-block-all) ;;Start blocks collapsed
+(define-key org-mode-map (kbd "C-c t") 'org-toggle-block)
 
 (setq org-preview-latex-default-process 'dvipng)
 (setq org-latex-packages-alist '(("" "physics" t)))
@@ -93,6 +95,10 @@
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
 (setq company-global-modes '(not org-mode)) ;disable company mode in org
 
+(setq org-agenda-staart-with-log-mode t)
+(setq org-log-done 'time)
+(setq org-log-into-drawer t)
+
 (use-package! org-super-agenda
   :after org-agenda
   :init
@@ -112,7 +118,11 @@
   :config
   (org-super-agenda-mode)
   )
+
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
+
+(require 'org-superstar)
+(add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
 
 (define-key global-map "\C-cl" 'org-store-link)
 (setq org-log-done t)
