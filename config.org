@@ -375,6 +375,14 @@ Make sure that you have =xclip= installed. I also use =gnome-screenshot= for eas
 (add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
 #+end_src
 
+** Code in Org
+
+#+begin_src emacs-lisp
+(map! :leader
+      :desc "Tangle-all"
+      "c T" #'org-babel-tangle)
+#+end_src
+
 * PDF-Tools
 
 #+BEGIN_SRC emacs-lisp

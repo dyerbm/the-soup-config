@@ -210,6 +210,10 @@ that."
 (require 'org-download)
 (add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
 
+(map! :leader
+      :desc "Tangle-all"
+      "c T" #'org-babel-tangle)
+
 (use-package! pdf-tools
   :config
   (evil-define-key 'normal pdf-view-mode-map (kbd ":") 'pdf-view-goto-page)
