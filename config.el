@@ -70,6 +70,8 @@
   (global-tree-sitter-mode)
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
+(setq display-line-numbers-type 'nil)
+
 (require 'org)
 
 (setq org-startup-folded t)
@@ -95,9 +97,10 @@
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
 (setq company-global-modes '(not org-mode)) ;disable company mode in org
 
-(setq org-agenda-staart-with-log-mode t)
+(setq org-agenda-start-with-log-mode t)
 (setq org-log-done 'time)
 (setq org-log-into-drawer t)
+(setq org-modules '(org-habit))
 
 (use-package! org-super-agenda
   :after org-agenda
@@ -112,12 +115,27 @@
                                   (:name "Overdue"
                                    :deadline past)
                                   (:name "Due soon"
-                                   :deadline future)
+                                   :deadline future
+                                   :time-grid t)
+                                  (:name "Goals"
+                                   :scheduled future)
                                   (:name "Big Outcomes"
                                    :tag "bo")))
   :config
   (org-super-agenda-mode)
+  (setq org-super-agenda-header-map nil)
+  (setq org-deadline-warning-days 7)
+  (setq org-agenda-block-separator 9472)
+  (setq org-agenda-skip-scheduled-if-done t)
+  (setq org-agenda-start-on-weekday nil)
+  (setq org-agenda-start-day "-1d")
+  (setq org-agenda-span 7)
+  (setq org-habit-graph-column 80)
+  (setq org-habit-show-habits-only-for-today nil)
   )
+
+(eval-after-load 'org
+  '(org-load-modules-maybe t))
 
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
 

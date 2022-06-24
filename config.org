@@ -78,6 +78,12 @@
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 #+end_src
 
+* View
+
+#+begin_src emacs-lisp
+(setq display-line-numbers-type 'nil)
+#+end_src
+
 * Org
 
 #+BEGIN_SRC emacs-lisp
@@ -87,8 +93,6 @@
 (add-hook 'org-mode-hook 'org-hide-block-all) ;;Start blocks collapsed
 (define-key org-mode-map (kbd "C-c t") 'org-toggle-block)
 #+END_SRC
-
-
 
 ** Latex in Org
 
@@ -115,9 +119,10 @@
 
 ** Org-agenda
 #+BEGIN_SRC emacs-lisp
-(setq org-agenda-staart-with-log-mode t)
+(setq org-agenda-start-with-log-mode t)
 (setq org-log-done 'time)
 (setq org-log-into-drawer t)
+(setq org-modules '(org-habit))
 
 (use-package! org-super-agenda
   :after org-agenda
@@ -132,12 +137,27 @@
                                   (:name "Overdue"
                                    :deadline past)
                                   (:name "Due soon"
-                                   :deadline future)
+                                   :deadline future
+                                   :time-grid t)
+                                  (:name "Goals"
+                                   :scheduled future)
                                   (:name "Big Outcomes"
                                    :tag "bo")))
   :config
   (org-super-agenda-mode)
+  (setq org-super-agenda-header-map nil)
+  (setq org-deadline-warning-days 7)
+  (setq org-agenda-block-separator 9472)
+  (setq org-agenda-skip-scheduled-if-done t)
+  (setq org-agenda-start-on-weekday nil)
+  (setq org-agenda-start-day "-1d")
+  (setq org-agenda-span 7)
+  (setq org-habit-graph-column 80)
+  (setq org-habit-show-habits-only-for-today nil)
   )
+
+(eval-after-load 'org
+  '(org-load-modules-maybe t))
 
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
 
@@ -377,6 +397,7 @@ Make sure that you have =xclip= installed. I also use =gnome-screenshot= for eas
 #+END_SRC
 
 * Buffer Switching
+
 #+BEGIN_SRC emacs-lisp
 (use-package! ace-window
   :config
