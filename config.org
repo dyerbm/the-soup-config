@@ -160,7 +160,7 @@
   '(org-load-modules-maybe t))
 
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
-
+(advice-add 'org-todo :after 'org-save-all-org-buffers) ;;autosave org-buffers when changing todo's in the agenda
 
 #+END_SRC
 
