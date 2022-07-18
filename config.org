@@ -160,8 +160,9 @@
   '(org-load-modules-maybe t))
 
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
-(advice-add 'org-todo :after 'org-save-all-org-buffers) ;;autosave org-buffers when changing todo's in the agenda
-
+;;(advice-add 'org-todo :after 'org-save-all-org-buffers) ;;autosave org-buffers when changing todo's in the agenda
+(add-hook 'org-trigger-hook 'save-buffer)
+;(advice-add 'org-habit-parse-todo :after 'org-save-all-org-buffers)
 #+END_SRC
 
 ** Org-Bullets
@@ -372,6 +373,7 @@ Make sure that you have =xclip= installed. I also use =gnome-screenshot= for eas
 
 #+begin_src emacs-lisp
 (require 'org-download)
+(setq-default org-download-image-dir "./.autofigs/")
 (add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
 #+end_src
 

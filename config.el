@@ -138,7 +138,9 @@
   '(org-load-modules-maybe t))
 
 (setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
-(advice-add 'org-todo :after 'org-save-all-org-buffers) ;;autosave org-buffers when changing todo's in the agenda
+;;(advice-add 'org-todo :after 'org-save-all-org-buffers) ;;autosave org-buffers when changing todo's in the agenda
+(add-hook 'org-trigger-hook 'save-buffer)
+;(advice-add 'org-habit-parse-todo :after 'org-save-all-org-buffers)
 
 (require 'org-superstar)
 (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
@@ -209,6 +211,7 @@ that."
 (define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link) ;; need to be able to use this after all
 
 (require 'org-download)
+(setq-default org-download-image-dir "./.autofigs/")
 (add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
 
 (map! :leader
