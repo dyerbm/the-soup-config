@@ -318,6 +318,9 @@ Default starting place is the home directory."
               :keymap counsel-find-file-map
               :caller 'my/magit-status)))
 
+;don't show the diff on commit, now requires intentionally openning. Should improve performance
+(remove-hook 'server-switch-hook 'magit-commit-diff)
+
 (map! :leader
       "x" nil
       (:prefix ("x" . "dired")
