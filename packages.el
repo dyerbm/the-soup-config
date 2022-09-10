@@ -63,3 +63,4 @@
 (package! org-download)
 (package! ivy-bibtex)
 (package! org-superstar)
+(package! ox-hugo)
