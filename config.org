@@ -379,10 +379,29 @@ Make sure that you have =xclip= installed. I also use =gnome-screenshot= for eas
 
 ** Code in Org
 
+*** Tangle key bind
+
 #+begin_src emacs-lisp
 (map! :leader
       :desc "Tangle-all"
       "c T" #'org-babel-tangle)
+#+end_src
+
+*** Org-special-edit
+
+Open org-special-edit in the same window as it was called from.
+#+begin_src emacs-lisp
+(add-to-list 'display-buffer-alist '("^\\*Org Src"
+                                     (display-buffer-same-window)
+                                     (display-buffer-reuse-window)
+                                     (window-parameters
+                                      (ttl)
+                                      (quit)
+                                      (select . t)
+                                      (modeline . t)
+                                      (autosave . t)
+                                      (transient . t)
+                                      (no-other-window . t))))
 #+end_src
 
 * PDF-Tools

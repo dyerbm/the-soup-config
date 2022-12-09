@@ -218,6 +218,18 @@ that."
       :desc "Tangle-all"
       "c T" #'org-babel-tangle)
 
+(add-to-list 'display-buffer-alist '("^\\*Org Src"
+                                     (display-buffer-same-window)
+                                     (display-buffer-reuse-window)
+                                     (window-parameters
+                                      (ttl)
+                                      (quit)
+                                      (select . t)
+                                      (modeline . t)
+                                      (autosave . t)
+                                      (transient . t)
+                                      (no-other-window . t))))
+
 (use-package! pdf-tools
   :config
   (evil-define-key 'normal pdf-view-mode-map (kbd ":") 'pdf-view-goto-page)
