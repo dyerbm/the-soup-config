@@ -34,7 +34,7 @@
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t
-      projectile-project-search-path '("~/Documents")
+      projectile-project-search-path '("~/Documents/" "~/")
       )
 
 
@@ -348,3 +348,9 @@ Default starting place is the home directory."
   :ensure t ;Auto-install the package from Melpa
   :pin melpa ;packages-achrives
   :after ox)
+
+(use-package claude-code
+  :straight (:type git :host github :repo "stevemolitor/claude-code.el")
+  :bind-keymap ("C-c c" . claude-code-command-map)
+  :config
+  (claude-code-mode))
