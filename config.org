@@ -3,131 +3,83 @@
 #+BEGIN_SRC emacs-lisp
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
-;; Place your private configuration here! Remember, you do not need to run 'doom
-;; sync' after modifying this file!
-
-
-;; Some functionality uses this to identify you, e.g. GPG configuration, email
-;; clients, file templates and snippets.
 (setq user-full-name "Benjamin Dyer"
       user-mail-address "dyerbm@mcmaster.ca")
 
-;; Doom exposes five (optional) variables for controlling fonts in Doom. Here
-;; are the three important ones:
-;;
-;; + `doom-font'
-;; + `doom-variable-pitch-font'
-;; + `doom-big-font' -- used for `doom-big-font-mode'; use this for
-;;   presentations or streaming.
-;;
-;; They all accept either a font-spec, font string ("Input Mono-12"), or xlfd
-;; font string. You generally only need these two:
-;; (setq doom-font (font-spec :family "monospace" :size 12 :weight 'semi-light)
-;;       doom-variable-pitch-font (font-spec :family "sans" :size 13))
-
-;; There are two ways to load a theme. Both assume the theme is installed and
-;; available. You can either set `doom-theme' or manually load a theme with the
-;; `load-theme' function. This is the default:
-(setq doom-theme 'doom-one)
-
-;; If you use `org' and don't want your org files in the default location below,
-;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/org/")
-
-;; This determines the style of line numbers in effect. If set to `nil', line
-;; numbers are disabled. For relative line numbers, set this to `relative'.
-(setq display-line-numbers-type t
-      projectile-project-search-path '("~/Documents/" "~/")
-      )
-
-
-;; Here are some additional functions/macros that could help you configure Doom:
-;;
-;; - `load!' for loading external *.el files relative to this one
-;; - `use-package!' for configuring packages
-;; - `after!' for running code after a package has loaded
-;; - `add-load-path!' for adding directories to the `load-path', relative to
-;;   this file. Emacs searches the `load-path' when you load packages with
-;;   `require' or `use-package'.
-;; - `map!' for binding new keys
-;;
-;; To get information about any of these functions/macros, move the cursor over
-;; the highlighted symbol at press 'K' (non-evil users must press 'C-c c k').
-;; This will open documentation for it, including demos of how they are used.
-;;
-;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
-;; they are implemented.
-
-
-(let ((default-directory (expand-file-name "packages" doom-private-dir)))
-  (normal-top-level-add-subdirs-to-load-path))
-
-(add-to-list 'exec-path "/usr/local/texlive/2021/bin/x86_64-linux")
-(add-to-list 'exec-path "/usr/local/texlive/2021/texmf-dist/tex/")
-
-(setq doom-localleader-key ";")
+(setq doom-theme 'doom-one
+      doom-localleader-key ";"
+      org-directory "~/org/"
+      projectile-project-search-path '("~/Documents/" "~/"))
 #+END_SRC
 
 * Language Parsers
 ** Tree Sitter
-#+begin_src emacs-lisp
-(use-package! tree-sitter
-  :config
-  (require 'tree-sitter-langs)
-  (global-tree-sitter-mode)
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
-#+end_src
+Uses Emacs's built-in =treesit= through Doom's =:tools tree-sitter= module, enabled per language with the =+tree-sitter= flag in =init.el= (cc, python, markdown). Grammars are downloaded and compiled the first time a file of that language is opened.
 
 * View
 
 #+begin_src emacs-lisp
-(setq display-line-numbers-type 'nil)
+(setq display-line-numbers-type nil)
 #+end_src
 
 * Org
 
-#+BEGIN_SRC emacs-lisp
-(require 'org)
+Doom's org module sets its own defaults when org loads, so org settings go in =after! org=.
 
-(setq org-startup-folded t)
-(add-hook 'org-mode-hook 'org-hide-block-all) ;;Start blocks collapsed
-(define-key org-mode-map (kbd "C-c t") 'org-toggle-block)
+#+BEGIN_SRC emacs-lisp
+(after! org
+  (setq org-startup-folded t
+        org-hide-block-startup t))   ; start with blocks collapsed
+
+(map! :after org
+      :map org-mode-map
+      "C-c t" #'org-fold-hide-block-toggle)
 #+END_SRC
 
 ** Latex in Org
 
 #+BEGIN_SRC emacs-lisp
-(setq org-preview-latex-default-process 'dvipng)
-(setq org-latex-packages-alist '(("" "physics" t)))
-(setq org-latex-packages-alist '(("" "siunitx" t)))
+(setq org-preview-latex-default-process 'dvipng
+      org-latex-packages-alist '(("" "physics" t)
+                                 ("" "siunitx" t))
+      ;; latexmk reruns pdflatex/bibtex as many times as needed
+      org-latex-pdf-process '("latexmk -f -pdf -interaction=nonstopmode -output-directory=%o %f"))
 
 ;; auto compile latex fragments
-(use-package! org-fragtog)
-(add-hook 'org-mode-hook 'org-fragtog-mode)
+(use-package! org-fragtog
+  :hook (org-mode . org-fragtog-mode))
 
-;; latex processing
-(setq org-latex-pdf-process
-      '("pdflatex -interaction nonstopmode -output-directory %o %f"
-        "bibtex %b"
-        "pdflatex -interaction nonstopmode -output-directory %o %f"
-        "pdflatex -interaction nonstopmode -output-directory %o %f")) ;check what this does
-
-(setq bibtex-dialect 'BibTeX)
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
-(setq company-global-modes '(not org-mode)) ;disable company mode in org
+
+;; no company completion in org
+(after! company
+  (add-to-list 'company-global-modes 'org-mode t))
 #+END_SRC
 
 ** Org-agenda
 #+BEGIN_SRC emacs-lisp
-(setq org-agenda-start-with-log-mode t)
-(setq org-log-done 'time)
-(setq org-log-into-drawer t)
-(setq org-modules '(org-habit))
+(after! org
+  (setq org-agenda-files '("~/Documents/Org/SchoolTasks.org")
+        org-agenda-start-with-log-mode t
+        org-log-done 'time
+        org-log-into-drawer t
+        org-deadline-warning-days 7
+        org-agenda-block-separator ?─
+        org-agenda-skip-scheduled-if-done t
+        org-agenda-start-on-weekday nil
+        org-agenda-start-day "-1d"
+        org-agenda-span 7
+        org-habit-graph-column 80
+        org-habit-show-habits-only-for-today nil))
+
+(after! org-agenda
+  (require 'org-habit))
 
 (use-package! org-super-agenda
   :after org-agenda
-  :init
-  (setq org-super-agenda-groups '((:name "Today"
+  :config
+  (setq org-super-agenda-header-map nil
+        org-super-agenda-groups '((:name "Today"
                                    :time-grid t
                                    :scheduled today)
                                   (:name "Due today"
@@ -143,26 +95,10 @@
                                    :scheduled future)
                                   (:name "Big Outcomes"
                                    :tag "bo")))
-  :config
-  (org-super-agenda-mode)
-  (setq org-super-agenda-header-map nil)
-  (setq org-deadline-warning-days 7)
-  (setq org-agenda-block-separator 9472)
-  (setq org-agenda-skip-scheduled-if-done t)
-  (setq org-agenda-start-on-weekday nil)
-  (setq org-agenda-start-day "-1d")
-  (setq org-agenda-span 7)
-  (setq org-habit-graph-column 80)
-  (setq org-habit-show-habits-only-for-today nil)
-  )
+  (org-super-agenda-mode))
 
-(eval-after-load 'org
-  '(org-load-modules-maybe t))
-
-(setq org-agenda-files (list "~/Documents/Org/SchoolTasks.org"))
-;;(advice-add 'org-todo :after 'org-save-all-org-buffers) ;;autosave org-buffers when changing todo's in the agenda
-(add-hook 'org-trigger-hook 'save-buffer)
-;(advice-add 'org-habit-parse-todo :after 'org-save-all-org-buffers)
+;; Save the org file whenever a TODO state changes (also from the agenda)
+(add-hook 'org-trigger-hook (lambda (_) (save-buffer)))
 #+END_SRC
 
 ** Org-Bullets
@@ -170,211 +106,206 @@
 Gimme dem bullets
 
 #+BEGIN_SRC emacs-lisp
-(require 'org-superstar)
-(add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
+(add-hook 'org-mode-hook #'org-superstar-mode)
 #+END_SRC
 
 ** Org-ref
 
 #+BEGIN_SRC emacs-lisp
+(map! "C-c l" #'org-store-link)
 
-(define-key global-map "\C-cl" 'org-store-link)
-(setq org-log-done t)
+(defvar my/bib-dir "~/Documents/bibliography/")
 
-(use-package org-ref
-  :ensure t
-  :init
-  (with-eval-after-load 'ox
-    (defun my/org-ref-process-buffer--html (backend)
-      "Preprocess `org-ref' citations to HTML format.
-
-Do this only if the export backend is `html' or a derivative of
-that."
-      ;; `ox-hugo' is derived indirectly from `ox-html'.
-      ;; ox-hugo <- ox-blackfriday <- ox-md <- ox-html
-      (when (org-export-derived-backend-p backend 'html)
-        (org-ref-process-buffer 'html)))
-    (add-to-list 'org-export-before-parsing-hook #'my/org-ref-process-buffer--html)))
-
-(setq reftex-default-bibliography '("~/Documents/bibliography/references.bib"))
-
-(setq org-ref-bibliography-notes "~/Documents/bibliography/notes.org"
-      org-ref-default-bibliography '("~/Documents/bibliography/references.bib")
-      org-ref-pdf-directory "~/Documents/bibliography/pdfs")
-
-(setq bibtex-completion-bibliography "~/Documents/bibliography/references.bib"
-      bibtex-completion-library-path "~/Documents/bibliography/pdfs/"
-      bibtex-completion-notes-path "~/Documents/bibliography/notes.org"
-      bibtex-completion-notes-template-multiple-files "* ${author-or-editor}, ${title}, ${journal}, (${year}) :${=type=}: \n\nSee [[cite:&${=key=}]]\n"
-
-	bibtex-completion-additional-search-fields '(keywords)
-	bibtex-completion-display-formats
-	'((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
-	  (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
-	  (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-	  (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
-	  (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
-	bibtex-completion-pdf-open-function
-	(lambda (fpath)
-	  (call-process "open" nil 0 nil fpath)))
-
-
-(require 'bibtex)
+(setq bibtex-completion-bibliography (expand-file-name "references.bib" my/bib-dir)
+      bibtex-completion-library-path (expand-file-name "pdfs/" my/bib-dir)
+      bibtex-completion-notes-path (expand-file-name "notes.org" my/bib-dir)
+      reftex-default-bibliography (list bibtex-completion-bibliography)
+      ;; notes.org is a single file, so this is the template that gets used.
+      ;; The Custom_ID drawer is how bibtex-completion finds existing notes.
+      bibtex-completion-notes-template-one-file
+      "\n* ${author-or-editor}, ${title}, ${journal}, (${year}) :${=type=}:\n  :PROPERTIES:\n  :Custom_ID: ${=key=}\n  :END:\n\nSee [[cite:&${=key=}]]\n"
+      bibtex-completion-additional-search-fields '(keywords)
+      bibtex-completion-display-formats
+      '((article       . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${journal:40}")
+        (inbook        . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} Chapter ${chapter:32}")
+        (incollection  . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
+        (inproceedings . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*} ${booktitle:40}")
+        (t             . "${=has-pdf=:1}${=has-note=:1} ${year:4} ${author:36} ${title:*}"))
+      bibtex-completion-pdf-open-function
+      (lambda (fpath) (call-process "xdg-open" nil 0 nil fpath)))
 
 (setq bibtex-autokey-year-length 4
-	bibtex-autokey-name-year-separator "-"
-	bibtex-autokey-year-title-separator "-"
-	bibtex-autokey-titleword-separator "-"
-	bibtex-autokey-titlewords 2
-	bibtex-autokey-titlewords-stretch 1
-	bibtex-autokey-titleword-length 5
-	org-ref-bibtex-hydra-key-binding (kbd "H-b"))
+      bibtex-autokey-name-year-separator "-"
+      bibtex-autokey-year-title-separator "-"
+      bibtex-autokey-titleword-separator "-"
+      bibtex-autokey-titlewords 2
+      bibtex-autokey-titlewords-stretch 1
+      bibtex-autokey-titleword-length 5)
 
-(define-key bibtex-mode-map (kbd "H-b") 'org-ref-bibtex-hydra/body)
+(defun my/org-ref-process-buffer--html (backend)
+  "Process org-ref citations for html exports (ox-hugo derives from html)."
+  (when (org-export-derived-backend-p backend 'html)
+    (org-ref-process-buffer 'html)))
 
-;; User org-ref-ivy
-(require 'org-ref-ivy)
-
-(setq org-ref-insert-link-function 'org-ref-insert-link-hydra/body
-      org-ref-insert-cite-function 'org-ref-cite-insert-ivy
-      org-ref-insert-label-function 'org-ref-insert-label-link
-      org-ref-insert-ref-function 'org-ref-insert-ref-link
-      org-ref-cite-onclick-function (lambda (_) (org-ref-citation-hydra/body)))
-
-(define-key org-mode-map (kbd "C-c ]") 'org-ref-insert-link) ;; need to be able to use this after all
-
-
-
+(use-package! org-ref
+  :after (:any org bibtex)
+  :config
+  (require 'org-ref-ivy)
+  (add-hook 'org-export-before-parsing-functions #'my/org-ref-process-buffer--html)
+  (map! :map org-mode-map "C-c ]" #'org-ref-insert-link
+        :map bibtex-mode-map "H-b" #'org-ref-bibtex-entry-menu))
 #+END_SRC
-10.1109/icma49215.2020.9233826
-Here is some stuff to modify how pdfs are downloaded and opened. Currently not included as it throws some errors
-10.1109/SysCon48628.2021.944713
-10.1109/ICRAS49812.2020.9134921
-#+Begin_SRC elisp :tangle no
-;(setq bibtex-completion-pdfopen-function 'pdf-tools)
-(setq doi-utils-async-download nil)
 
+** PDF download
 
-(setq doi-utils-open-pdf-after-download 't)
+=doi-utils-get-bibtex-entry-pdf= (and =doi-add-bibtex-entry=) tries the publisher first (Elsevier via its API, see below), then falls back to Sci-Hub. With a prefix arg it copies the pdf from a file/buffer as usual.
 
-(defun my/org-ref-open-pdf-at-point ()
-  "Open the pdf for bibtex key under point if it exists."
-  (interactive)
-  (let* ((results (org-ref-get-bibtex-key-and-file))
-         (key (car results)))
-    (funcall bibtex-completion-pdf-open-function (car (bibtex-completion-find-pdf key)))))
+Test DOIs: 10.1109/icma49215.2020.9233826, 10.1109/SysCon48628.2021.944713, 10.1109/ICRAS49812.2020.9134921, 10.1016/j.jcp.2019.108962
 
-(setq org-ref-open-pdf-function #'my/org-ref-open-pdf-at-point)
+#+BEGIN_SRC emacs-lisp
+(setq doi-utils-async-download nil       ; use the (advised) synchronous downloader below
+      doi-utils-open-pdf-after-download t)
 
-;; Allow for pulling pdfs from sci-hub
-;; Thanks to user Ajned on the emacs stack exchange
-;; Sci-hub function
-(defun sci-hub-pdf-url (doi)
-  "Get url to the pdf from SCI-HUB"
-  (setq *doi-utils-pdf-url* (concat "https://sci-hub.se/" doi) ;captcha
-        ,*doi-utils-waiting* t
-        )
-  ;; try to find PDF url (if it exists)
-  (url-retrieve (concat "https://sci-hub.se/" doi)
-            (lambda (status)
-              (goto-char (point-min))
-              (while (search-forward-regexp "\\(https://\\|//sci-hub.se/downloads\\).+download=true'" nil t)
-                (let ((foundurl (match-string 0)))
-                  (message foundurl)
-                  (if (string-match "https:" foundurl)
-                  (setq *doi-utils-pdf-url* foundurl)
-                (setq *doi-utils-pdf-url* (concat "https:" foundurl))))
-                (setq *doi-utils-waiting* nil))))
- ; (while *doi-utils-waiting* (sleep-for 0.1))
-  ,*doi-utils-pdf-url*)
+;; Elsevier: the ScienceDirect pdf links block non-browser clients (403), so
+;; use the Article Retrieval API instead. Entitlement is checked by IP, so this
+;; works on the university network/VPN. Get a free key at
+;; https://dev.elsevier.com and put it in ~/.authinfo(.gpg) as
+;;   machine api.elsevier.com password <KEY>
+;; or export ELSEVIER_API_KEY.
+(defun my/elsevier-api-key ()
+  (or (getenv "ELSEVIER_API_KEY")
+      (progn (require 'auth-source)
+             (auth-source-pick-first-password :host "api.elsevier.com"))))
 
-;; add to the doi-utils-pdf-url-functions
-;;(add-to-list 'doi-utils-pdf-url-functions 'sci-hub-pdf-url)
+(defun my/elsevier-api-pdf-url (redirect)
+  "Elsevier API pdf url for a linkinghub/sciencedirect REDIRECT url."
+  (when-let* (((string-match "\\(?:linkinghub\\.elsevier\\|sciencedirect\\)\\.com/.*/pii/\\([0-9A-Z]+\\)"
+                             redirect))
+              (pii (match-string 1 redirect))
+              (key (my/elsevier-api-key)))
+    (format "https://api.elsevier.com/content/article/pii/%s?httpAccept=application/pdf&apiKey=%s"
+            pii key)))
 
-;; Update doi function to use the sci-hub-pdf-url function
-(defun doi-utils-get-bibtex-entry-pdf (&optional arg)
-    "Download pdf for entry at point if the pdf does not already exist locally.
-The entry must have a doi. The pdf will be saved to
-`org-ref-pdf-directory', by the name %s.pdf where %s is the
-bibtex label.  Files will not be overwritten.  The pdf will be
-checked to make sure it is a pdf, and not some html failure
-page. You must have permission to access the pdf. We open the pdf
-at the end if `doi-utils-open-pdf-after-download' is non-nil.
+;; Most publishers advertise the pdf in a citation_pdf_url meta tag
+(defun my/citation-pdf-url (redirect)
+  "Read the pdf url from the citation_pdf_url meta tag on the REDIRECT page."
+  (when-let* ((buf (ignore-errors (url-retrieve-synchronously redirect t t 30))))
+    (unwind-protect
+        (with-current-buffer buf
+          (goto-char (point-min))
+          (when (or (re-search-forward "<meta[^>]+name=\"citation_pdf_url\"[^>]+content=\"\\([^\"]+\\)\"" nil t)
+                    (re-search-forward "<meta[^>]+content=\"\\([^\"]+\\)\"[^>]+name=\"citation_pdf_url\"" nil t))
+            (url-expand-file-name
+             (replace-regexp-in-string "&amp;" "&" (match-string 1)) redirect)))
+      (kill-buffer buf))))
 
-With one prefix ARG, directly get the pdf from a file (through
-`read-file-name') instead of looking up a DOI. With a double
-prefix ARG, directly get the pdf from an open buffer (through
-`read-buffer-to-switch') instead. These two alternative methods
-work even if the entry has no DOI, and the pdf file is not
-checked."
-    (interactive "P")
-    (save-excursion
-      (bibtex-beginning-of-entry)
-      (let ( ;; get doi, removing http://dx.doi.org/ if it is there.
-        (doi (replace-regexp-in-string
-          "https?://\\(dx.\\)?.doi.org/" ""
-          (bibtex-autokey-get-field "doi")))
-        (key (cdr (assoc "=key=" (bibtex-parse-entry))))
-        (pdf-url)
-        (pdf-file))
-    (setq pdf-file (concat
-            (if org-ref-pdf-directory
-                (file-name-as-directory org-ref-pdf-directory)
-              (read-directory-name "PDF directory: " "."))
-            key ".pdf"))
-    ;; now get file if needed.
-    (unless (file-exists-p pdf-file)
-      (cond
-       ((and (not arg)
-        (message "here")
-          doi
-          (if (doi-utils-get-pdf-url doi)
-             ;(setq pdf-url (sci-hub-pdf-url doi)))
-             ;(url-copy-file pdf-url pdf-file)))
-             (setq pdf-url (doi-utils-get-pdf-url doi))
-             (setq pdf-url "https://www.sciencedirect.com/science/article/")))
-        (url-copy-file pdf-url pdf-file)
-        ;; now check if we got a pdf
-        (if (org-ref-pdf-p pdf-file)
-          (message "%s saved" pdf-file)
-          (delete-file pdf-file)
-          ;; sci-hub fallback option
-          (setq pdf-url (sci-hub-pdf-url doi))
-          (url-copy-file pdf-url pdf-file)
-          ;; now check if we got a pdf
-          (if (org-ref-pdf-p pdf-file)
-          (message "%s saved" pdf-file)
-        (delete-file pdf-file)
-        (message "No pdf was downloaded.") ; SH captcha
-        (browse-url pdf-url))))
-       ;; End of sci-hub fallback option
-       ((equal arg '(4))
-        (copy-file (expand-file-name (read-file-name "Pdf file: " nil nil t))
-               pdf-file))
-       ((equal arg '(16))
-        (with-current-buffer (read-buffer-to-switch "Pdf buffer: ")
-          (write-file pdf-file)))
-       (t
-        (message "We don't have a recipe for this journal.")))
-      (when (and doi-utils-open-pdf-after-download (file-exists-p pdf-file))
-        (message "Here")
-        (org-open-file pdf-file))))))
+;; Sci-Hub fallback
+(defvar my/sci-hub-mirrors '("https://sci-hub.ru" "https://sci-hub.st" "https://sci-hub.se")
+  "Sci-Hub mirrors, tried in order.")
 
-(setq doi-utils-open-pdf-after-download t) ;always open the pdf after downloading
-(setq doi-utils-make-notes t) ;auto generate notes
+(defun my/sci-hub-pdf-url (doi)
+  "Return a direct pdf url for DOI from the first Sci-Hub mirror that has it."
+  (cl-loop for mirror in my/sci-hub-mirrors
+           thereis
+           (when-let* ((buf (ignore-errors
+                              (url-retrieve-synchronously (concat mirror "/" doi) t t 30))))
+             (unwind-protect
+                 (with-current-buffer buf
+                   (goto-char (point-min))
+                   (if (or (re-search-forward "citation_pdf_url\" content=\"\\([^\"]+\\)\"" nil t)
+                           (re-search-forward "<\\(?:embed\\|iframe\\)[^>]+src=\"\\([^\"#]+\\.pdf\\)" nil t)
+                           (re-search-forward "<object[^>]+data=\"\\([^\"#]+\\.pdf\\)" nil t))
+                       (url-expand-file-name (match-string 1) (concat mirror "/"))
+                     (when (search-forward "altcha" nil t)
+                       (message "Sci-Hub (%s) is showing a robot check; wait a while or open it in a browser"
+                                mirror))
+                     nil))
+               (kill-buffer buf)))))
 
+(defvar my/browser-user-agent
+  "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0"
+  "Sci-Hub serves a robot check to Emacs' default user agent.")
 
+(defun my/doi-utils-download-pdf (doi pdf-file)
+  "Save the pdf for DOI to PDF-FILE, trying the publisher first and then Sci-Hub.
+Return the url it came from, or nil."
+  (cl-loop with url-user-agent = my/browser-user-agent
+           for getter in '(doi-utils-get-pdf-url my/sci-hub-pdf-url)
+           for url = (ignore-errors (funcall getter doi))
+           thereis (when (and url (ignore-errors (url-copy-file url pdf-file t) t))
+                     (if (org-ref-pdf-p pdf-file)
+                         url
+                       (delete-file pdf-file)
+                       (message "%s did not return a pdf" getter)
+                       nil))))
+
+(defun my/doi-utils-get-redirect (doi)
+  "Like `doi-utils-get-redirect', but gives up after 30s.
+Upstream's callback signals on HTTP errors (e.g. Cloudflare 403s from Wiley)
+before clearing `*doi-utils-waiting*', so it waits forever."
+  (setq *doi-utils-waiting* t
+        *doi-utils-redirect* nil)
+  (url-retrieve (concat doi-utils-dx-doi-org-url doi)
+                (lambda (status)
+                  (setq *doi-utils-redirect* (plist-get status :redirect)
+                        *doi-utils-waiting* nil)
+                  (kill-buffer))
+                nil t t)
+  (let ((deadline (+ (float-time) 30)))
+    (while (and *doi-utils-waiting* (< (float-time) deadline))
+      (sleep-for 0.1))))
+
+(after! doi-utils
+  (advice-add 'doi-utils-get-redirect :override #'my/doi-utils-get-redirect)
+
+  ;; Upstream's version calls `replace-string', which edits the current buffer
+  ;; and returns nil; the API function above covers ScienceDirect instead.
+  (setq doi-utils-pdf-url-functions
+        (append (list #'my/elsevier-api-pdf-url)
+                (delq 'science-direct-pdf-url doi-utils-pdf-url-functions)
+                (list #'my/citation-pdf-url)))
+
+  (defadvice! my/doi-utils-get-bibtex-entry-pdf-a (fn &optional arg)
+    "Download the pdf for the entry at point, falling back to Sci-Hub.
+With a prefix ARG, defer to the original (copy from a file or buffer)."
+    :around #'doi-utils-get-bibtex-entry-pdf
+    (if arg
+        (funcall fn arg)
+      (save-excursion
+        (bibtex-beginning-of-entry)
+        (let* ((doi (replace-regexp-in-string "https?://\\(dx\\.\\)?doi\\.org/" ""
+                                              (bibtex-autokey-get-field "doi")))
+               (pdf-file (expand-file-name
+                          (concat (funcall doi-utils-pdf-filename-function) ".pdf")
+                          (if (stringp bibtex-completion-library-path)
+                              bibtex-completion-library-path
+                            (car bibtex-completion-library-path)))))
+          (cond
+           ((string-empty-p doi) (user-error "Entry has no DOI"))
+           ((file-exists-p pdf-file) (message "%s already exists" pdf-file))
+           ((my/doi-utils-download-pdf doi pdf-file)
+            (bibtex-set-field "file" pdf-file)
+            (message "%s saved" pdf-file)
+            (when doi-utils-open-pdf-after-download
+              (org-open-file pdf-file)))
+           (t
+            (message "No pdf found for %s, opening it in the browser" doi)
+            (browse-url (concat doi-utils-dx-doi-org-url doi)))))))))
 #+END_SRC
 
 ** Image insertion
-We use this for =M-x org-download-clipboard= which allows to directly insert an image stored in the clipboard into the current org doc.
+To paste an image from the clipboard into an org buffer, use =M-x yank-media=. It is built into Emacs/Org and needs no external tools; the image is saved to =./.autofigs/= next to the org file and a link is inserted at point.
 
-Make sure that you have =xclip= installed. I also use =gnome-screenshot= for easy screenshot capture. Take a screenshot (saved into clipboard) and then execute the =M-x org-download-clipboard= command while in an org buffer to insert clipboard image at point. Default config saves the image in the same directory as the org buffer.
+=M-x org-download-clipboard= does the same through =org-download=, but needs =xclip= installed. =org-download= also handles drag-and-drop of images into dired.
 
 #+begin_src emacs-lisp
-(require 'org-download)
-(setq-default org-download-image-dir "./.autofigs/")
-(add-hook 'dired-mode-hook 'org-download-enable) ;Drag-and-drop to dired
+(setq org-yank-image-save-method "./.autofigs/")
+
+(use-package! org-download
+  :commands org-download-clipboard
+  :hook (dired-mode . org-download-enable)   ; drag-and-drop to dired
+  :init
+  (setq-default org-download-image-dir "./.autofigs/"))
 #+end_src
 
 ** Code in Org
@@ -389,94 +320,66 @@ Make sure that you have =xclip= installed. I also use =gnome-screenshot= for eas
 
 *** Org-special-edit
 
-Open org-special-edit in the same window as it was called from.
+Open org-special-edit in the same window as it was called from. Doom shows =*Org Src*= buffers as popups, so turn that off and let org place the window.
 #+begin_src emacs-lisp
-(add-to-list 'display-buffer-alist '("^\\*Org Src"
-                                     (display-buffer-same-window)
-                                     (display-buffer-reuse-window)
-                                     (window-parameters
-                                      (ttl)
-                                      (quit)
-                                      (select . t)
-                                      (modeline . t)
-                                      (autosave . t)
-                                      (transient . t)
-                                      (no-other-window . t))))
+(after! org
+  (set-popup-rule! "^\\*Org Src" :ignore t)
+  (setq org-src-window-setup 'current-window))
 #+end_src
 
 * PDF-Tools
 
 #+BEGIN_SRC emacs-lisp
-(use-package! pdf-tools
-  :config
-  (evil-define-key 'normal pdf-view-mode-map (kbd ":") 'pdf-view-goto-page)
-  (map! :localleader
-        :map pdf-view-mode-map
-          "f" #'pdf-occur
-          ;; History
-          "c" #'pdf-history-clear
-          "j" #'pdf-history-backward
-          "k" #'pdf-history-forward
+(map! :after pdf-view
+      :map pdf-view-mode-map
+      :n ":" #'pdf-view-goto-page
+      :localleader
+      "f" #'pdf-occur
+      ;; History
+      "c" #'pdf-history-clear
+      "j" #'pdf-history-backward
+      "k" #'pdf-history-forward
+      "o" #'pdf-outline)
 
-          "o" #'pdf-outline))
-
-(add-hook! 'pdf-view-mode-hook
-           (pdf-view-midnight-minor-mode))
-
+(add-hook 'pdf-view-mode-hook #'pdf-view-midnight-minor-mode)
 #+END_SRC
 
 * Buffer Switching
 
 #+BEGIN_SRC emacs-lisp
-(use-package! ace-window
-  :config
-  (map! :leader
-        "k" nil
-        :desc "ace-window" "k" #'ace-window)
+(after! ace-window
   (setq aw-scope 'global
-        aw-ignore-on nil ; allow ace to jump to any buffer
-        ))
+        aw-ignore-on nil))   ; allow ace to jump to any buffer
+
+(defun my/switch-buffer-by-extension (&rest extensions)
+  "Switch to another buffer visiting a file with one of EXTENSIONS."
+  (let ((names (cl-loop for buf in (buffer-list)
+                        for file = (buffer-file-name buf)
+                        when (and file
+                                  (not (eq buf (current-buffer)))
+                                  (member (file-name-extension file) extensions))
+                        collect (buffer-name buf))))
+    (if names
+        (switch-to-buffer (completing-read "Switch to buffer: " names nil t))
+      (user-error "No other .%s buffers" (string-join extensions "/.")))))
 
 (map! :leader
-      (:desc "next buffer" "D" #'switch-to-next-buffer
-        :desc "prev buffer" "d" #'switch-to-prev-buffer
-        )
-      (:prefix "s"
-        :desc "swiper-isearch-thing-at-point" "t" #'swiper-isearch-thing-at-point)
-        ;; :desc "helm-projectile-rg" "p" #'helm-projectile-rg)
-      (:desc "repeat last command" "." #'repeat))
-
-(use-package! ivy
- :config
- (map! :leader
-     "A" #'ivy-switch-buffer
+      :desc "ace-window" "k" #'ace-window
+      :desc "next buffer" "D" #'switch-to-next-buffer
+      :desc "prev buffer" "d" #'switch-to-prev-buffer
+      :desc "swiper-isearch-thing-at-point" "s t" #'swiper-isearch-thing-at-point
+      :desc "repeat last command" "." #'repeat
+      :desc "switch buffer" "A" #'ivy-switch-buffer
       "a" nil
       (:prefix ("a" . "switch-to-buffer")
-       :desc "c"   "c"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(cpp\|c\)"))
-       :desc "h"   "h"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(hpp\|h\)"))
-       :desc "m"   "m"  #'(lambda () (interactive) (my/ivy-switch-buffer "\(mat\|m\)"))
-       :desc "pdf" "f"  #'(lambda () (interactive) (my/ivy-switch-buffer "pdf"))
-       :desc "py"  "p"  #'(lambda () (interactive) (my/ivy-switch-buffer "py"))
-       :desc "org" "o"  #'(lambda () (interactive) (my/ivy-switch-buffer "org"))
-       :desc "el"  "e"  #'(lambda () (interactive) (my/ivy-switch-buffer "el"))
-       :desc "bib" "b"  #'(lambda () (interactive)  (my/ivy-switch-buffer "bib")))))
-
-(defun my/ivy-switch-buffer (extension)
-  ;; Show available buffers for a given extension
-  (interactive)
-  (let ((completion-regexp-list (list (concat ".\." extension "$"))))
-  (ivy-read "Switch to buffer: " #'internal-complete-buffer
-            :keymap ivy-switch-buffer-map
-            :preselect (buffer-name (other-buffer (current-buffer)))
-            :action #'ivy--switch-buffer-action
-            :matcher #'ivy--switch-buffer-matcher
-            :caller 'ivy-switch-buffer)))
-
-(defun my/switch-to-next-buffer-with-same-extension ()
-  (interactive)
-(save-match-data ; is usually a good idea
-  (string-match "\..$" (buffer-name))))
-
+       :desc "c"   "c" (cmd! (my/switch-buffer-by-extension "c" "cpp"))
+       :desc "h"   "h" (cmd! (my/switch-buffer-by-extension "h" "hpp"))
+       :desc "m"   "m" (cmd! (my/switch-buffer-by-extension "m" "mat"))
+       :desc "pdf" "f" (cmd! (my/switch-buffer-by-extension "pdf"))
+       :desc "py"  "p" (cmd! (my/switch-buffer-by-extension "py"))
+       :desc "org" "o" (cmd! (my/switch-buffer-by-extension "org"))
+       :desc "el"  "e" (cmd! (my/switch-buffer-by-extension "el"))
+       :desc "bib" "b" (cmd! (my/switch-buffer-by-extension "bib"))))
 #+END_SRC
 
 * Maximize window
@@ -487,42 +390,31 @@ Open org-special-edit in the same window as it was called from.
        :desc "maximize window" "f" #'my/toggle-maximize-buffer
        :desc "make new frame"  "n" #'make-frame))
 
-(defun my/toggle-maximize-buffer () "Maximize buffer"
+(defun my/toggle-maximize-buffer ()
+  "Maximize the current window, or restore the layout from before maximizing."
   (interactive)
-  (if (= 1 (length (window-list)))
-      (jump-to-register '_)
-    (progn
-      (window-configuration-to-register '_)
-      (delete-other-windows))))
+  (if (and (one-window-p) (get-register ?_))
+      (jump-to-register ?_)
+    (window-configuration-to-register ?_)
+    (delete-other-windows)))
 #+END_SRC
 
 * MAGIT
 
 #+BEGIN_SRC emacs-lisp
-(use-package! magit
-  :config
-  (map! :leader
-        (:prefix "g"
-         :desc "status" "G" #'my/magit-status
-         :desc "buffer-lock" "T" #'magit-toggle-buffer-lock)))
+(map! :leader
+      (:prefix "g"
+       :desc "status" "G" #'my/magit-status
+       :desc "buffer-lock" "T" #'magit-toggle-buffer-lock))
 
-(defun my/magit-status ()
-  "Use ivy to specify directory from which to open a magit status buffer.
-Default starting place is the home directory."
-  (interactive)
-  (let ((default-directory "~/"))
-    (ivy-read "git status: " #'read-file-name-internal
-              :matcher #'counsel--find-file-matcher
-              :action #'(lambda (x)
-                          (magit-status x))
-              :preselect (counsel--preselect-file)
-              :require-match 'confirm-after-completion
-              :history 'file-name-history
-              :keymap counsel-find-file-map
-              :caller 'my/magit-status)))
+(defun my/magit-status (dir)
+  "Open a magit status buffer for DIR, picked starting from the home directory."
+  (interactive (list (read-directory-name "git status: " "~/")))
+  (let ((default-directory dir))
+    (call-interactively #'magit-status)))
 
-;don't show the diff on commit, now requires intentionally openning. Should improve performance
-(remove-hook 'server-switch-hook 'magit-commit-diff)
+;; don't show the diff on commit, now requires intentionally opening. Should improve performance
+(setq magit-commit-show-diff nil)
 #+END_SRC
 
 * DIRED
@@ -531,7 +423,7 @@ Default starting place is the home directory."
 (map! :leader
       "x" nil
       (:prefix ("x" . "dired")
-       :desc "dired here" "d" #'(lambda () (interactive) (dired default-directory))
+       :desc "dired here" "d" #'dired-jump
        :desc "dired" "D" #'dired))
 
 (setq delete-by-moving-to-trash t) ; Move to trash bin instead of permanently deleting it
@@ -543,21 +435,16 @@ Default starting place is the home directory."
 * Ox-hugo
 
 #+BEGIN_SRC emacs-lisp
-(with-eval-after-load 'ox
-  (require 'ox-hugo))
-
 (use-package! ox-hugo
-  :ensure t ;Auto-install the package from Melpa
-  :pin melpa ;packages-achrives
   :after ox)
 #+END_SRC
 
 * Agentic AI
 
 #+begin_src emacs-lisp
-(use-package claude-code
-  :straight (:type git :host github :repo "stevemolitor/claude-code.el")
+(use-package! claude-code
   :bind-keymap ("C-c c" . claude-code-command-map)
   :config
+  (setq claude-code-terminal-backend 'vterm)
   (claude-code-mode))
 #+end_src

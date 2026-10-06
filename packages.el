@@ -58,9 +58,10 @@
 (package! ace-window)
 (package! ivy)
 (package! cdlatex)
-(package! tree-sitter)
-(package! tree-sitter-langs)
+(package! org-fragtog)
 (package! org-download)
 (package! ivy-bibtex)
 (package! org-superstar)
 (package! ox-hugo)
+(package! claude-code
+  :recipe (:host github :repo "stevemolitor/claude-code.el"))
