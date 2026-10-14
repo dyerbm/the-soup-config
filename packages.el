@@ -59,6 +59,7 @@
 (package! ivy)
 (package! cdlatex)
 (package! org-fragtog)
+(package! hotfuzz)
 (package! org-download)
 (package! ivy-bibtex)
 (package! org-superstar)

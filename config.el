@@ -8,6 +8,41 @@
       org-directory "~/org/"
       projectile-project-search-path '("~/Documents/" "~/"))
 
+(add-to-list 'exec-path (expand-file-name "~/.local/bin"))
+
+(setq completion-styles '(hotfuzz basic))
+
+;; TAB accepts, RET is always a newline
+(setq +corfu-want-ret-to-confirm nil)
+(after! corfu
+  (setq corfu-preselect 'first)
+  (map! :map corfu-map
+        :gi "TAB" #'corfu-insert
+        :gi [tab] #'corfu-insert))
+
+;; In code, ask the server for completions from the first character. Servers
+;; narrow their list with their own, stricter matching, so asking later loses
+;; candidates hotfuzz would have found (e.g. clangd drops compute_average at "cm").
+(setq-hook! 'prog-mode-hook corfu-auto-prefix 1)
+
+;; Keep snippets out of the popup (insert them with SPC i s)
+(remove-hook 'yas-minor-mode-hook #'+corfu-add-yasnippet-capf-h)
+
+(after! eglot
+  ;; clangd: send every match instead of the top 100, don't add #includes, and
+  ;; complete functions as "name()" instead of pasting in the whole signature
+  (set-eglot-client! '(c-mode c-ts-mode c++-mode c++-ts-mode)
+                     '("clangd" "--limit-results=0" "--header-insertion=never"
+                       "--function-arg-placeholders=0"))
+  (add-to-list 'completion-category-overrides '(eglot-capf (styles hotfuzz)))
+  ;; Ask servers to keep function signatures out of completion labels, so
+  ;; matching only sees the name (otherwise "cntr" matches "restrict" in a signature)
+  (cl-defmethod eglot-client-capabilities :around (_server)
+    (let ((caps (cl-call-next-method)))
+      (plist-put (plist-get (plist-get (plist-get caps :textDocument) :completion) :completionItem)
+                 :labelDetailsSupport t)
+      caps)))
+
 (setq display-line-numbers-type nil)
 
 (after! org
@@ -30,9 +65,8 @@
 
 (add-hook 'org-mode-hook #'turn-on-org-cdlatex)
 
-;; no company completion in org
-(after! company
-  (add-to-list 'company-global-modes 'org-mode t))
+;; no automatic completion popup in org (M-TAB still completes)
+(setq-hook! 'org-mode-hook corfu-auto nil)
 
 (after! org
   (setq org-agenda-files '("~/Documents/Org/SchoolTasks.org")
@@ -355,4 +389,12 @@ With a prefix ARG, defer to the original (copy from a file or buffer)."
   :bind-keymap ("C-c c" . claude-code-command-map)
   :config
   (setq claude-code-terminal-backend 'vterm)
+  ;; Tell Claude about height changes too (default only sends width changes), otherwise
+  ;; it keeps drawing for the height of the window it started in and clips long replies
+  (setq claude-code-optimize-window-resize nil)
   (claude-code-mode))
+
+;; More scrollback for long Claude sessions (Doom sets 5000 lines; 100000 is the maximum).
+;; Must be set globally: vterm reads it before `claude-code-start-hook' runs.
+(after! vterm
+  (setq vterm-max-scrollback 100000))
