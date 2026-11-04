@@ -200,7 +200,7 @@ Gimme dem bullets
 
 ** PDF download
 
-=doi-utils-get-bibtex-entry-pdf= (and =doi-add-bibtex-entry=) tries the publisher first (Elsevier via its API, see below), then falls back to Sci-Hub. With a prefix arg it copies the pdf from a file/buffer as usual.
+=doi-utils-get-bibtex-entry-pdf= (and =doi-add-bibtex-entry=) tries the publisher first (Elsevier via its API, see below), then arXiv, then falls back to Sci-Hub. With a prefix arg it copies the pdf from a file/buffer as usual.
 
 Test DOIs: 10.1109/icma49215.2020.9233826, 10.1109/SysCon48628.2021.944713, 10.1109/ICRAS49812.2020.9134921, 10.1016/j.jcp.2019.108962
 
@@ -241,6 +241,39 @@ Test DOIs: 10.1109/icma49215.2020.9233826, 10.1109/SysCon48628.2021.944713, 10.1
              (replace-regexp-in-string "&amp;" "&" (match-string 1)) redirect)))
       (kill-buffer buf))))
 
+;; arXiv: look up the title on Crossref and search arXiv for an exact match
+(defun my/url-body (url)
+  "Return the body of URL as a string, or nil."
+  (when-let* ((buf (ignore-errors (url-retrieve-synchronously url t t 30))))
+    (unwind-protect
+        (with-current-buffer buf
+          (goto-char (point-min))
+          (when (re-search-forward "\r?\n\r?\n" nil t)
+            (decode-coding-string (buffer-substring (point) (point-max)) 'utf-8)))
+      (kill-buffer buf))))
+
+(defun my/arxiv-pdf-url (doi)
+  "Return an arXiv pdf url for DOI, matching on its Crossref title and first author."
+  (cl-flet ((norm (s) (downcase (replace-regexp-in-string "[^[:alnum:]]" "" s))))
+    (if (string-match "\\`10\\.48550/arxiv\\.\\(.+\\)" (downcase doi))
+        (concat "https://arxiv.org/pdf/" (match-string 1 doi))
+      (when-let* ((json (my/url-body (concat "https://api.crossref.org/works/" doi)))
+                  (msg (gethash "message" (json-parse-string json)))
+                  (title (seq-first (gethash "title" msg)))
+                  (author (gethash "family" (seq-first (gethash "author" msg)) ""))
+                  (feed (my/url-body
+                         (concat "https://export.arxiv.org/api/query?max_results=5&search_query="
+                                 (url-hexify-string
+                                  (format "ti:\"%s\"" (replace-regexp-in-string "[^[:alnum:]]+" " " title)))))))
+        (with-temp-buffer
+          (insert feed)
+          (goto-char (point-min))
+          (cl-loop while (re-search-forward "<id>https?://arxiv\\.org/abs/\\([^<]+\\)</id>\\s-*<title>\\([^<]+\\)</title>" nil t)
+                   for id = (match-string 1)
+                   when (and (equal (norm (match-string 2)) (norm title))
+                             (search-forward author (save-excursion (search-forward "</entry>" nil t)) t))
+                   return (concat "https://arxiv.org/pdf/" id)))))))
+
 ;; Sci-Hub fallback
 (defvar my/sci-hub-mirrors '("https://sci-hub.ru" "https://sci-hub.st" "https://sci-hub.se")
   "Sci-Hub mirrors, tried in order.")
@@ -269,10 +302,10 @@ Test DOIs: 10.1109/icma49215.2020.9233826, 10.1109/SysCon48628.2021.944713, 10.1
   "Sci-Hub serves a robot check to Emacs' default user agent.")
 
 (defun my/doi-utils-download-pdf (doi pdf-file)
-  "Save the pdf for DOI to PDF-FILE, trying the publisher first and then Sci-Hub.
+  "Save the pdf for DOI to PDF-FILE, trying the publisher, arXiv, then Sci-Hub.
 Return the url it came from, or nil."
   (cl-loop with url-user-agent = my/browser-user-agent
-           for getter in '(doi-utils-get-pdf-url my/sci-hub-pdf-url)
+           for getter in '(doi-utils-get-pdf-url my/arxiv-pdf-url my/sci-hub-pdf-url)
            for url = (ignore-errors (funcall getter doi))
            thereis (when (and url (ignore-errors (url-copy-file url pdf-file t) t))
                      (if (org-ref-pdf-p pdf-file)
