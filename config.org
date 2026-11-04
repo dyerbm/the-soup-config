@@ -457,6 +457,37 @@ Open org-special-edit in the same window as it was called from. Doom shows =*Org
        :desc "bib" "b" (cmd! (my/switch-buffer-by-extension "bib"))))
 #+END_SRC
 
+* Projects
+
+Opening a project (=SPC p p=) prompts for a file to open, as usual, but the first option, =>_ vterm=, opens a vterm in the project's root instead.
+
+#+BEGIN_SRC emacs-lisp
+(defconst my/project-vterm-candidate ">_ vterm"
+  "Candidate that opens a vterm instead of a file when opening a project.")
+
+(defun my/project-find-file-or-vterm (dir)
+  "Pick a file to open in project DIR, or open a vterm at its root (the first option).
+Falls back to `doom-project-find-file' when DIR isn't a project."
+  (let* ((root (doom-project-root dir))
+         (default-directory (file-truename dir))
+         (projectile-project-root root))
+    (if (not (and root (file-equal-p root default-directory)))
+        (doom-project-find-file dir)
+      (require 'counsel-projectile)
+      (ivy-read (projectile-prepend-project-name "Find file: ")
+                (cons my/project-vterm-candidate (projectile-current-project-files))
+                :matcher #'counsel-projectile--find-file-matcher
+                :require-match t
+                :action (lambda (file)
+                          (if (equal file my/project-vterm-candidate)
+                              (let ((default-directory root))
+                                (+vterm/here t))
+                            (counsel-projectile-find-file-action file)))
+                :caller 'my/project-find-file-or-vterm))))
+
+(setq +workspaces-switch-project-function #'my/project-find-file-or-vterm)
+#+END_SRC
+
 * Maximize window
 
 #+BEGIN_SRC emacs-lisp
