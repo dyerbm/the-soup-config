@@ -191,6 +191,39 @@
              (replace-regexp-in-string "&amp;" "&" (match-string 1)) redirect)))
       (kill-buffer buf))))
 
+;; arXiv: look up the title on Crossref and search arXiv for an exact match
+(defun my/url-body (url)
+  "Return the body of URL as a string, or nil."
+  (when-let* ((buf (ignore-errors (url-retrieve-synchronously url t t 30))))
+    (unwind-protect
+        (with-current-buffer buf
+          (goto-char (point-min))
+          (when (re-search-forward "\r?\n\r?\n" nil t)
+            (decode-coding-string (buffer-substring (point) (point-max)) 'utf-8)))
+      (kill-buffer buf))))
+
+(defun my/arxiv-pdf-url (doi)
+  "Return an arXiv pdf url for DOI, matching on its Crossref title and first author."
+  (cl-flet ((norm (s) (downcase (replace-regexp-in-string "[^[:alnum:]]" "" s))))
+    (if (string-match "\\`10\\.48550/arxiv\\.\\(.+\\)" (downcase doi))
+        (concat "https://arxiv.org/pdf/" (match-string 1 doi))
+      (when-let* ((json (my/url-body (concat "https://api.crossref.org/works/" doi)))
+                  (msg (gethash "message" (json-parse-string json)))
+                  (title (seq-first (gethash "title" msg)))
+                  (author (gethash "family" (seq-first (gethash "author" msg)) ""))
+                  (feed (my/url-body
+                         (concat "https://export.arxiv.org/api/query?max_results=5&search_query="
+                                 (url-hexify-string
+                                  (format "ti:\"%s\"" (replace-regexp-in-string "[^[:alnum:]]+" " " title)))))))
+        (with-temp-buffer
+          (insert feed)
+          (goto-char (point-min))
+          (cl-loop while (re-search-forward "<id>https?://arxiv\\.org/abs/\\([^<]+\\)</id>\\s-*<title>\\([^<]+\\)</title>" nil t)
+                   for id = (match-string 1)
+                   when (and (equal (norm (match-string 2)) (norm title))
+                             (search-forward author (save-excursion (search-forward "</entry>" nil t)) t))
+                   return (concat "https://arxiv.org/pdf/" id)))))))
+
 ;; Sci-Hub fallback
 (defvar my/sci-hub-mirrors '("https://sci-hub.ru" "https://sci-hub.st" "https://sci-hub.se")
   "Sci-Hub mirrors, tried in order.")
@@ -219,10 +252,10 @@
   "Sci-Hub serves a robot check to Emacs' default user agent.")
 
 (defun my/doi-utils-download-pdf (doi pdf-file)
-  "Save the pdf for DOI to PDF-FILE, trying the publisher first and then Sci-Hub.
+  "Save the pdf for DOI to PDF-FILE, trying the publisher, arXiv, then Sci-Hub.
 Return the url it came from, or nil."
   (cl-loop with url-user-agent = my/browser-user-agent
-           for getter in '(doi-utils-get-pdf-url my/sci-hub-pdf-url)
+           for getter in '(doi-utils-get-pdf-url my/arxiv-pdf-url my/sci-hub-pdf-url)
            for url = (ignore-errors (funcall getter doi))
            thereis (when (and url (ignore-errors (url-copy-file url pdf-file t) t))
                      (if (org-ref-pdf-p pdf-file)
@@ -346,6 +379,31 @@ With a prefix ARG, defer to the original (copy from a file or buffer)."
        :desc "org" "o" (cmd! (my/switch-buffer-by-extension "org"))
        :desc "el"  "e" (cmd! (my/switch-buffer-by-extension "el"))
        :desc "bib" "b" (cmd! (my/switch-buffer-by-extension "bib"))))
+
+(defconst my/project-vterm-candidate ">_ vterm"
+  "Candidate that opens a vterm instead of a file when opening a project.")
+
+(defun my/project-find-file-or-vterm (dir)
+  "Pick a file to open in project DIR, or open a vterm at its root (the first option).
+Falls back to `doom-project-find-file' when DIR isn't a project."
+  (let* ((root (doom-project-root dir))
+         (default-directory (file-truename dir))
+         (projectile-project-root root))
+    (if (not (and root (file-equal-p root default-directory)))
+        (doom-project-find-file dir)
+      (require 'counsel-projectile)
+      (ivy-read (projectile-prepend-project-name "Find file: ")
+                (cons my/project-vterm-candidate (projectile-current-project-files))
+                :matcher #'counsel-projectile--find-file-matcher
+                :require-match t
+                :action (lambda (file)
+                          (if (equal file my/project-vterm-candidate)
+                              (let ((default-directory root))
+                                (+vterm/here t))
+                            (counsel-projectile-find-file-action file)))
+                :caller 'my/project-find-file-or-vterm))))
+
+(setq +workspaces-switch-project-function #'my/project-find-file-or-vterm)
 
 (map! :leader
       (:prefix "w"
